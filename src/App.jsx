@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import "./App.css";
+import { useState, useEffect, useRef } from "react";
+import "./index.css";
 
 function App() {
   const [breakLength, setBreakLength] = useState(5);
@@ -9,14 +9,14 @@ function App() {
   const [isRunning, setIsRunning] = useState(false);
   const beepRef = useRef(null);
 
-  // Format seconds -> mm:ss
   const formatTime = (time) => {
     const minutes = Math.floor(time / 60);
     const seconds = time % 60;
-    return `${minutes < 10 ? "0" : ""}${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+    return `${minutes.toString().padStart(2, "0")}:${seconds
+      .toString()
+      .padStart(2, "0")}`;
   };
 
-  // ----- Length handlers -----
   const handleBreakChange = (amount) => {
     if (isRunning) return;
     const newLength = breakLength + amount;
@@ -32,12 +32,10 @@ function App() {
     }
   };
 
-  // ----- Start/Stop -----
   const handleStartStop = () => {
     setIsRunning((prev) => !prev);
   };
 
-  // ----- Reset -----
   const handleReset = () => {
     setIsRunning(false);
     setTimerLabel("Session");
@@ -48,23 +46,25 @@ function App() {
     beepRef.current.currentTime = 0;
   };
 
-  // ----- Countdown logic using setTimeout -----
   useEffect(() => {
-    let timeout = null;
-    if (isRunning && timeLeft > 0) {
-      timeout = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-    } else if (isRunning && timeLeft === 0) {
-      // Play beep when time reaches 0
-      beepRef.current.play();
+    if (!isRunning) return;
 
-      if (timerLabel === "Session") {
-        setTimerLabel("Break");
-        setTimeLeft(breakLength * 60);
+    const timeout = setTimeout(() => {
+      if (timeLeft > 0) {
+        setTimeLeft((prev) => prev - 1);
       } else {
-        setTimerLabel("Session");
-        setTimeLeft(sessionLength * 60);
+        beepRef.current.play();
+
+        if (timerLabel === "Session") {
+          setTimerLabel("Break");
+          setTimeLeft(breakLength * 60);
+        } else {
+          setTimerLabel("Session");
+          setTimeLeft(sessionLength * 60);
+        }
       }
-    }
+    }, 1000);
+
     return () => clearTimeout(timeout);
   }, [isRunning, timeLeft, timerLabel, breakLength, sessionLength]);
 
@@ -73,26 +73,18 @@ function App() {
       <h1>25 + 5 Clock</h1>
 
       <div className="length-controls">
-        <div className="break-control">
+        <div>
           <h2 id="break-label">Break Length</h2>
-          <button id="break-decrement" onClick={() => handleBreakChange(-1)}>
-            -
-          </button>
+          <button onClick={() => handleBreakChange(-1)}>-</button>
           <span id="break-length">{breakLength}</span>
-          <button id="break-increment" onClick={() => handleBreakChange(1)}>
-            +
-          </button>
+          <button onClick={() => handleBreakChange(1)}>+</button>
         </div>
 
-        <div className="session-control">
+        <div>
           <h2 id="session-label">Session Length</h2>
-          <button id="session-decrement" onClick={() => handleSessionChange(-1)}>
-            -
-          </button>
+          <button onClick={() => handleSessionChange(-1)}>-</button>
           <span id="session-length">{sessionLength}</span>
-          <button id="session-increment" onClick={() => handleSessionChange(1)}>
-            +
-          </button>
+          <button onClick={() => handleSessionChange(1)}>+</button>
         </div>
       </div>
 
@@ -113,11 +105,9 @@ function App() {
       <audio
         id="beep"
         ref={beepRef}
-        preload="auto"
         src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"
-      ></audio>
+      />
 
-      {/* Footer text that fades in */}
       <div className="footer">
         <div>Designed and created by</div>
         <em>Dev Johan Swart</em>
